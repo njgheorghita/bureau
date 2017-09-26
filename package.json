@@ -1,0 +1,9 @@
+{
+  "name": "bureau",
+  "devDependencies": {
+    "web3": "1.0.0-beta.20"
+  },
+  "dependencies": {
+    "truffle": "^3.4.9"
+  }
+}
