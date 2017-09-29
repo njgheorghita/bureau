@@ -81,54 +81,20 @@ contract('Org', function() {
     //   {from: orgWallet})
     // });
 
+    // it('can add a client to clientBase', async function() {
+
+    // });
     // it('can start a loan with a client', async function() {
+
+    // });
+    // it('can search for a client', async function() {
+
+    // });
+    // it('can pay for a clients history / stats', async function() {
 
     // });
 
 
-  //   it('can create a new client', async function() {
-  //     let clientAddress = await org.getClientAddressById(1);
-  //     let personalInfo = await org.getClientPersonalInfoById(1);
-
-  //     assert.equal(personalInfo.length, 10)
-  //     assert.equal(personalInfo[0], clientWallet);
-  //   });
-
-  //   it("only allows the orgWallet can create a new client", async function() {
-  //     try {
-  //       await org.createClient(web3.eth.accounts[3],"False","data","date",100,0,4,6,3,false,3,2,3,44, {from: web3.eth.accounts[4]})
-  //     } catch(err) {
-  //       assert.include(String(err), "invalid opcode");
-  //     }
-  //   });
-
-  //   it("only allows the orgWallet can get client data", async function() {
-  //     try {
-  //       await org.getClientPersonalInfoById(1, {from: web3.eth.accounts[4]})
-  //     } catch(err) {
-  //       assert.include(String(err), "invalid opcode");
-  //     }
-  //   });
-
-  //   it("can add a loan to a clients profile", async function() {
-  //     let clientAddress = await org.getClientAddressById(1);
-
-  //     // client_id, loan_id, amount, startDate, endDate, interestRate (*100), numberOfPayments, status
-  //     await org.addLoanToClientProfile(1, 12345, 100, "1/1/2000", "1/1/2001", 133, 12, true, {from: orgWallet});
-
-  //     let client = await Client.at(clientAddress);
-  //     let loanHistory = await client.getLoan(12345);
-  //     assert.equal(loanHistory.length, 7);
-  //     assert.equal(web3.toDecimal(loanHistory[0]), 12345);
-  //   });
-
-  //   it("only allows the orgWallet to add loan to client", async function() {
-  //     try {
-  //       await org.addLoanToClientProfile(1, 12345, 100, "1/1/2000", "1/1/2001", 133, 12, true, {from: web3.eth.accounts[4]})
-  //     } catch(err) {
-  //       assert.include(String(err), "invalid opcode");
-  //     }
-  //   });
 
   //   it("can add a job to a clients profile", async function() {
   //     let clientAddress = await org.getClientAddressById(1);

@@ -17,6 +17,7 @@ contract Bureau {
 
     scope out for now:
     purchasing a client report & kickbacks to orgs &/or client?
+    client savings / deposits / collateral
   /*
     address ownerAddress
     Bureau() : 

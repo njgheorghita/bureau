@@ -193,7 +193,8 @@ contract Client {
     uint8 education,
     uint8 householdSize,
     uint8 dependents,
-    bool married
+    bool married,
+    uint256 phoneNumber
   ) {
     return ( 
       clientWallet,
@@ -205,11 +206,12 @@ contract Client {
       clientInfo.education,
       clientInfo.householdSize,
       clientInfo.dependents,
-      clientInfo.married
+      clientInfo.married,
+      clientInfo.phoneNumber
     );
   }
 
-  struct SavingsTx{
+  struct SavingsTx {
     uint256 amount;
     uint256 datetime;
     bool txType;  // true = deposit, false = withdrawal

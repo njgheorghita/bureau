@@ -175,7 +175,8 @@ contract Org {
     uint8 education,
     uint8 householdSize,
     uint8 dependents,
-    bool married
+    bool married,
+    uint256 phoneNumber
   ) {
     Client currentClient = getClient(_id);
     return currentClient.getPersonalInfo();

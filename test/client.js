@@ -30,7 +30,7 @@ contract('Client', function() {
     let orgWalletAddress = await client.orgWallet();
 
     assert.equal(web3.toDecimal(numOfJobs), 0);
-    assert.equal(personalInfo.length, 10)
+    assert.equal(personalInfo.length, 11)
     assert.equal(clientWalletAddress, clientWallet);
     assert.equal(orgWalletAddress, web3.eth.accounts[0]);
   });
@@ -38,7 +38,7 @@ contract('Client', function() {
   it('returns client personal data properly', async function() {
     let personalInfo = await client.getPersonalInfo();
 
-    assert.equal(personalInfo.length, 10)
+    assert.equal(personalInfo.length, 11)
     assert.equal(personalInfo[0], clientWallet);
     assert.equal(web3.toAscii(personalInfo[1]).substring(0,6), "Client");
     assert.equal(web3.toAscii(personalInfo[2]).substring(
@@ -50,13 +50,7 @@ contract('Client', function() {
     assert.equal(web3.toDecimal(personalInfo[7]), 6);
     assert.equal(web3.toDecimal(personalInfo[8]), 3);
     assert.equal(personalInfo[9], false);
-    // !!!! 
-    // doesn't return entire personalInfo struct because of stack level too deep error
-    // !!!! 
-    // assert.equal(web3.toDecimal(personalInfo[10]), 5000);
-    // assert.equal(web3.toDecimal(personalInfo[11]), 2);
-    // assert.equal(web3.toDecimal(personalInfo[12]), 5);
-    // assert.equal(web3.toDecimal(personalInfo[13]), 1231221323);
+    assert.equal(web3.toDecimal(personalInfo[10]), 1231221323);
   });
 
   it('can add a loan to the profile', async function() {
