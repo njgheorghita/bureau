@@ -9,6 +9,7 @@ contract('Client', function() {
     clientWallet = web3.eth.accounts[1]
     // create client
     client = await Client.new(
+      12345,                              // id
       clientWallet,                       // Client wallet address
       "Client",                           // name
       "1234 5th Street, Denver CO 80218", // homeAddress
@@ -51,50 +52,6 @@ contract('Client', function() {
     assert.equal(web3.toDecimal(personalInfo[8]), 3);
     assert.equal(personalInfo[9], false);
     assert.equal(web3.toDecimal(personalInfo[10]), 1231221323);
-  });
-
-  it('can add a loan to the profile', async function() {
-    let addLoan = await client.addLoan(
-      12345,          // id
-      100,            // amount
-      "01/01/2000",   // start date
-      "01/01/2001",   // end date
-      1200,           // interest rate * 100
-      12,             // number of payments
-      true            // status 
-    )
-
-    let loanHistory = await client.getLoan(12345);
-    assert.equal(loanHistory.length, 7);
-    assert.equal(web3.toDecimal(loanHistory[0]), 12345);
-    assert.equal(web3.toDecimal(loanHistory[1]), 100);
-    assert.equal(web3.toAscii(loanHistory[2]).substring(0,10), "01/01/2000");
-    assert.equal(web3.toAscii(loanHistory[3]).substring(0,10), "01/01/2001");
-    assert.equal(web3.toDecimal(loanHistory[4]), 1200);
-    assert.equal(web3.toDecimal(loanHistory[5]), 12);
-    assert.equal(loanHistory[6], true);
-  });
-
-  it('only allows org to add loan to profile', async function() {
-    try {
-      await client.addLoan(
-        12345, 100, "01/01/2000", "01/01/2001", 1200, 12, true, {from: web3.eth.accounts[5]}
-      )
-    } catch(err) {
-      assert.include(String(err), "invalid opcode");
-    }
-  })
-
-  it('can calculate the loan repayment rate', async function() {
-    await client.addLoan(1,100,"01/01/2000","01/01/2001",1200,12,true);
-    await client.addLoan(2,100,"01/01/2000","01/01/2001",1200,12,false);
-    await client.addLoan(3,100,"01/01/2000","01/01/2001",1200,12,false);
-    
-    // returns uint = successful loans, uint = loanCount
-    let getRateVariables = await client.getLoanRepaymentRate();
-    let a = web3.toDecimal(getRateVariables[0]);
-    let b = web3.toDecimal(getRateVariables[1]);
-    assert.equal(Math.round((a/b)*1000), 333);
   });
 
   it('can add a job to the profile', async function() {

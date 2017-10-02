@@ -31,4 +31,20 @@ contract('Loan', function() {
     assert.equal(web3.toDecimal(loanInfo[4]), orgWallet);
     assert.equal(web3.toDecimal(loanInfo[5]), clientWallet);
   });
-})
+
+  it('keeps track of the repayment rate', async function() {
+    await loan.updateLoanPayment(true);
+    await loan.updateLoanPayment(false);
+    await loan.updateLoanPayment(false);
+
+    let currentPaymentCount = await loan.currentPaymentCount();
+    let currentSuccessfulPayment = await loan.currentSuccessfulPayments();
+    assert.equal(Math.round((currentSuccessfulPayment / currentPaymentCount)*1000), 333);  
+  });
+
+  it('can finalize the loan', async function() {
+    await loan.finalizeLoan(true);
+    let loanStatus = await loan.getLoanStatus();
+    assert.equal(web3.toAscii(loanStatus).substring(0,8), "Complete");
+  });
+});

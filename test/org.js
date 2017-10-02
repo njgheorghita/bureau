@@ -1,23 +1,28 @@
 let Org = artifacts.require("./Org.sol");
 let Client = artifacts.require("./Client.sol");
+let Bureau = artifacts.require("./Bureau.sol");
+let Loan = artifacts.require("./Loan.sol");
 require("../node_modules/web3/packages/web3-utils/src/index.js");
 
 contract('Org', function() {
   let org;
   let clientWallet;
   let orgWallet;
+  let org2;
+  let org2Wallet;
+  let client;
 
   beforeEach(async function() {
     orgWallet = web3.eth.accounts[1];
+    org2Wallet = web3.eth.accounts[5];
     clientWallet = web3.eth.accounts[2];
-    // create org
     org = await Org.new(
       123,                  // id
       "MFI",                // name
       "111 First St.",      // hqAddress
       "USA",                // country
       "$",                  // currency
-      orgWallet  // orgWallet
+      orgWallet             // orgWallet
     );
   });
 
@@ -61,35 +66,59 @@ contract('Org', function() {
     assert.equal(web3.toDecimal(quarterlyReport[10]), 32);
   });
 
-  // context("with a client", async function() {
-    // beforeEach(async function() {
-    //   await org.createClient(
-    //     clientWallet,                       // Client wallet address
-    //     "Client",                           // name
-    //     "1234 5th Street, Denver CO 80218", // homeAddress
-    //     "01/01/2000",                       // birthday
-    //     100,                                // age
-    //     0,                                  // gender
-    //     4,                                  // education
-    //     6,                                  // householdSize
-    //     3,                                  // dependents
-    //     false,                              // married
-    //     5000,                               // monthlyHouseholdIncome
-    //     2,                                  // numOfBusinesses
-    //     5,                                  // numOfEmployees
-    //     1231221323,                         // phoneNumber
-    //   {from: orgWallet})
+  context("with a bureau", async function() {
+    beforeEach(async function() {
+      // create bureau
+      bureau = await Bureau.new();
+      // create org via bureau
+      await bureau.addOrgToBureau(321,"MFI2","222","MEX","Peso", org2Wallet);
+      let org2address = await bureau.orgList(321);
+      org2 = Org.at(org2address);
+      // create client via bureau
+      await bureau.createClient(
+        111,clientWallet,"Client","1234 5th Street, Denver CO 80218",
+        "01/01/2000",100,0,4,6,3,false,1231221323
+      );
+      let clientAddress = await bureau.clientList(111);
+      client = await Client.at(clientAddress)
+    });
+
+    // it('can search for a client', async function() {
+
     // });
 
     // it('can add a client to clientBase', async function() {
 
     // });
-    // it('can start a loan with a client', async function() {
 
-    // });
-    // it('can search for a client', async function() {
+    it('can start a loan with a client and adds loan to clients profile', async function() {
+      await org2.createLoan(111,100,10,10,"1/1/1111");
+      let clientLoans = await org2.getLoansByClientId(111);
+      let clientPortfolio = await client.getLoanAddresses();
 
-    // });
+      assert.equal(clientPortfolio[0], clientLoans[0]);
+      assert.notInclude(clientLoans[0], "000000000");
+    });
+
+
+  it('can update loan payments and keeps track of org + clients rep score', async function() {
+      await org2.createLoan(111,100,10,10,"1/1/1111");
+      let clientLoans = await org2.getLoansByClientId(111);
+      await org2.updateLoanByAddress(clientLoans[0], true);
+      await org2.updateLoanByAddress(clientLoans[0], true);
+      await org2.updateLoanByAddress(clientLoans[0], false);
+      let currentLoan = Loan.at(clientLoans[0]);
+      let currentTotalPayments = await currentLoan.currentPaymentCount();
+      let currentSuccessPayments = await currentLoan.currentSuccessfulPayments();
+      let orgTotalPayments = await org2.totalClientPayments();
+      let orgSuccessfulPayments = await org2.totalSuccessfulClientPayments();
+
+      assert.equal(web3.toDecimal(currentTotalPayments), 3);
+      assert.equal(web3.toDecimal(currentSuccessPayments), 2);
+      assert.equal(web3.toDecimal(orgTotalPayments), 3);
+      assert.equal(web3.toDecimal(orgSuccessfulPayments), 2);
+  })
+
     // it('can pay for a clients history / stats', async function() {
 
     // });
@@ -136,5 +165,5 @@ contract('Org', function() {
   //   await secondClient.withdrawFunds(50, {from: web3.eth.accounts[6]});
   //   let grosserClientDeposits = await org.grossClientDeposits();
   //   assert.equal(web3.toDecimal(grosserClientDeposits), 150);
-  // }); 
+  }); 
 });

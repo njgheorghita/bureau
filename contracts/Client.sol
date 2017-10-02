@@ -49,12 +49,6 @@ contract Client {
     bool married;
     uint256 phoneNumber; // 0 for doesn't have one
   }
-  PersonalInfo public clientInfo;
-  address public clientWallet;
-  address public orgWallet;
-
-  mapping ( uint256 => Job ) public jobHistory;
-  uint256 public numberOfJobs;
   struct Job {
     bytes32 title;
     bytes32 employer;
@@ -63,96 +57,31 @@ contract Client {
     bytes32 endDate;
     uint256 monthlySalary;
   }
-
-  function addJob(
-    bytes32 _title,
-    bytes32 _employer,
-    bytes32 _workAddress,
-    bytes32 _startDate,
-    bytes32 _endDate,
-    uint256 _monthlySalary
-  ) 
-    onlyBy(orgWallet) 
-  {
-    numberOfJobs = numberOfJobs + 1;
-    Job memory newJob = Job(_title, _employer, _workAddress, _startDate, _endDate, _monthlySalary);
-    jobHistory[numberOfJobs] = newJob;
-  }
-
-  function getJob(uint256 _id) constant returns (bytes32, bytes32, bytes32, bytes32, bytes32, uint256) {
-    Job memory currentJob = jobHistory[_id];
-    return (
-      currentJob.title,
-      currentJob.employer,
-      currentJob.workAddress,
-      currentJob.startDate,
-      currentJob.endDate,
-      currentJob.monthlySalary
-    );
-  }
-
-  mapping ( uint256 => Loan ) public loanHistory;
-  uint256[] public loanIds;
-  struct Loan {
+  struct SavingsTx {
     uint256 amount;
-    bytes32 startDate;
-    bytes32 endDate;
-    uint256 interestRate;
-    uint8 numberOfPayments;
-    bool status;
+    uint256 datetime;
+    bool txType;  // true = deposit, false = withdrawal
   }
-
-  function addLoan
-  (
-    uint256 _id,
-    uint256 _amount, 
-    bytes32 _startDate,
-    bytes32 _endDate,
-    uint256 _interestRate, 
-    uint8 _numberOfPayments, 
-    bool _status // true - success / false - success
-  ) 
-    onlyBy(orgWallet) 
-  { 
-    Loan memory newLoan = Loan(
-      _amount, 
-      _startDate, 
-      _endDate, 
-      _interestRate, 
-      _numberOfPayments, 
-      _status
-    );
-    loanIds.push(_id);
-    loanHistory[_id] = newLoan;
-  }
-
-  function getLoanRepaymentRate() constant returns (uint repaymentRate, uint loanCount) {
-    uint totalLoans = loanIds.length;
-    uint successCounter = 0;
-    for (uint i = 0; i < totalLoans; i++) {
-      if (loanHistory[i].status == true) {
-        successCounter = successCounter + 1;
-      }
-    }
-    return (successCounter, totalLoans);
-  }
-
-  function getLoan(uint256 _id) constant returns (uint256,uint256,bytes32,bytes32,uint256,uint8,bool) {
-    Loan memory currentLoan;
-    currentLoan = loanHistory[_id];
-
-    return (
-      _id, 
-      currentLoan.amount, 
-      currentLoan.startDate, 
-      currentLoan.endDate, 
-      currentLoan.interestRate, 
-      currentLoan.numberOfPayments, 
-      currentLoan.status
-    );
+  mapping ( uint256 => SavingsTx ) savingsTxHistory;
+  mapping ( uint256 => Job ) public jobHistory;
+  PersonalInfo public clientInfo;
+  address[] public loanAddresses;
+  bytes32 public clientId;
+  uint256 public numberOfJobs;
+  bytes32 public clientName;
+  bytes32 public clientBirthday;
+  address public clientWallet;
+  address public orgWallet;
+  uint256 public numberOfSavingsTxs;
+  uint256 public totalNumberOfPayments;
+  uint256 public totalNumberOfSuccessfulPayments;
+  modifier onlyBy(address _account) {require(msg.sender == _account); _;}
+  modifier onlyByOrgOrClient() {
+    require(msg.sender == orgWallet || msg.sender == clientWallet); _;
   }
 
   function Client(
+    bytes32 _id,
     address _clientWallet,
     bytes32 _name,
     bytes32 _homeAddress, 
@@ -179,8 +108,21 @@ contract Client {
     });
     orgWallet = msg.sender;
     clientWallet = _clientWallet;
+    totalNumberOfPayments = 0;
+    totalNumberOfSuccessfulPayments = 0;
     numberOfJobs = 0;
     numberOfSavingsTxs = 0;
+    clientName = _name;
+    clientBirthday = _birthday;
+    clientId = _id;
+  }
+
+  function addLoanToClient(address _loanAddress) {
+    loanAddresses.push(_loanAddress);
+  }
+
+  function getLoanAddresses() constant returns(address[]) {
+    return loanAddresses;
   }
 
   function getPersonalInfo() constant onlyByOrgOrClient() returns (
@@ -211,16 +153,31 @@ contract Client {
     );
   }
 
-  struct SavingsTx {
-    uint256 amount;
-    uint256 datetime;
-    bool txType;  // true = deposit, false = withdrawal
+  function addJob(
+    bytes32 _title,
+    bytes32 _employer,
+    bytes32 _workAddress,
+    bytes32 _startDate,
+    bytes32 _endDate,
+    uint256 _monthlySalary
+  ) 
+    onlyBy(orgWallet) 
+  {
+    numberOfJobs = numberOfJobs + 1;
+    Job memory newJob = Job(_title, _employer, _workAddress, _startDate, _endDate, _monthlySalary);
+    jobHistory[numberOfJobs] = newJob;
   }
-  uint256 public numberOfSavingsTxs;
-  mapping ( uint256 => SavingsTx ) savingsTxHistory;
-  modifier onlyBy(address _account) { require(msg.sender == _account); _; }
-  modifier onlyByOrgOrClient() {
-    require(msg.sender == orgWallet || msg.sender == clientWallet); _;
+
+  function getJob(uint256 _id) constant returns (bytes32, bytes32, bytes32, bytes32, bytes32, uint256) {
+    Job memory currentJob = jobHistory[_id];
+    return (
+      currentJob.title,
+      currentJob.employer,
+      currentJob.workAddress,
+      currentJob.startDate,
+      currentJob.endDate,
+      currentJob.monthlySalary
+    );
   }
 
   function deposit() 
@@ -254,5 +211,11 @@ contract Client {
     // Org(orgWallet).updateGrossDeposits(_amount, false);
     msg.sender.transfer(_amount);
     return true;
+  }
+
+  function updateRepaymentRateStats(bool _paymentMade) public {
+    if (_paymentMade)
+      totalNumberOfSuccessfulPayments += 1;
+    totalNumberOfPayments += 1;
   }
 }

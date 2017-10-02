@@ -32,10 +32,19 @@ contract('Bureau', function() {
     assert.equal(newOrg[0], 123);
   });
 
+  context("voting", async function() {
+    it('it can create a ballot', async function() {
+      await bureau.createBallot(["First", "Second"]);
+      let ballotAddresses = await bureau.ballotAddresses(0);
+
+      assert.notInclude(ballotAddresses[0], "0000000")
+    })
+  })
+
   context("with a client", async function() {
     beforeEach(async function() {
       await bureau.createClient(
-        12345,                              // id
+        "Client-01/01/2000",                // id
         clientWallet,                       // Client wallet address
         "Client",                           // name
         "1234 5th Street, Denver CO 80218", // homeAddress
@@ -47,15 +56,25 @@ contract('Bureau', function() {
         3,                                  // dependents
         false,                              // married
         1231221323                          // phoneNumber
-    )});
+      )
+      await bureau.createClient("Other-01/20/2003", web3.eth.accounts[9], "Other", "Address", "01/20/2003",
+        123, 0, 3, 3, 1, true, 1412333234234
+      )
+    });
 
     it('can create a new client', async function() {
-      let clientAddress = await bureau.getClientAddressById(12345);
+      let clientAddress = await bureau.findClientAddress("Client-01/01/2000");
       let clientContract = await Client.at(clientAddress);
       let clientContractWallet = await clientContract.clientWallet();
 
       assert.equal(clientContractWallet, clientWallet);
     });
+
+    it('can search for a client', async function() {
+      let clientAddress = await bureau.findClientAddress("Client-01/01/2000")
+      
+      assert.notInclude(clientAddress, "00000000000");
+    })
 
 
     // it("can add a job to a clients profile", async function() {
