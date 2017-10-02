@@ -33,7 +33,6 @@ contract Org {
     getClient() : returns Client
     updateGrossDeposits() : 
   */
-
   struct GeneralInfo {
     uint256 id;
     bytes32 name;
@@ -41,6 +40,7 @@ contract Org {
     bytes32 country;
     bytes32 currency;
   }
+  
   struct QuarterlyReport {
     uint256 year; 
     uint256 quarter; 

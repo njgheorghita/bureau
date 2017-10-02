@@ -49,6 +49,7 @@ contract Client {
     bool married;
     uint256 phoneNumber; // 0 for doesn't have one
   }
+
   struct Job {
     bytes32 title;
     bytes32 employer;
