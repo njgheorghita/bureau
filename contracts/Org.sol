@@ -27,7 +27,6 @@ contract Org {
 
     CLIENTS
     mapping (numClient => address) clientList
-    getClientAddressById() : 
     getClientPersonalInfoById() :
     addJobToClientProfile() : onlyBy orgWallet
     getClient() : returns Client
@@ -132,23 +131,11 @@ contract Org {
     quarterlyReportHistory[_id] = newReport;
   }
 
-  function getClientAddressById(bytes32 _id) constant returns(address) {
-    return clientList[_id];
-  }
-
-  function getClientPersonalInfoById(bytes32 _id) constant returns
+  function getClientPersonalInfoById(bytes32 _id) 
+    constant 
+    returns
   (
-    address clientWallet,
-    bytes32 name,
-    bytes32 homeAddress, 
-    bytes32 birthday, 
-    uint256 age, 
-    uint8 gender, 
-    uint8 education,
-    uint8 householdSize,
-    uint8 dependents,
-    bool married,
-    uint256 phoneNumber
+    address,bytes32,bytes32,bytes32,uint256,uint8,uint8,uint8,uint8,bool,uint256
   ) {
     Client currentClient = getClient(_id);
     return currentClient.getPersonalInfo();
@@ -163,6 +150,7 @@ contract Org {
     bytes32 _startDate
   ) {
     address clientAddress = getClientAddressFromBureauById(_clientId);
+    clientList[_clientId] = clientAddress;
     address newLoanAddress = new Loan(
       _amount, _durationInMonths, _monthlyPayment, 
       _startDate, this, clientAddress  
@@ -177,13 +165,13 @@ contract Org {
     return loanRepo[_clientId];
   }
 
-  function getClient(bytes32 _clientId) returns(Client) {
+  function getClient(bytes32 _clientId) private returns(Client) {
     address currentClientAddress = clientList[_clientId];
     Client currentClient = Client(currentClientAddress);
     return currentClient;
   }
 
-  function getClientAddressFromBureauById(bytes32 _clientId) returns(address) {
+  function getClientAddressFromBureauById(bytes32 _clientId) private returns(address) {
     Bureau currentBureau = Bureau(bureauAddress);
     address currentClientAddress = currentBureau.findClientAddress(_clientId);
     return currentClientAddress;

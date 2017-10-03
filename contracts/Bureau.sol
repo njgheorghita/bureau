@@ -75,7 +75,7 @@ contract Bureau {
     return currentOrg.getGeneralInfo();
   }
 
-  function getOrg(uint256 _orgId) returns(Org) {
+  function getOrg(uint256 _orgId) private returns(Org) {
     address currentOrgAddress = orgList[_orgId];
     Org currentOrg = Org(currentOrgAddress);
     return currentOrg;
