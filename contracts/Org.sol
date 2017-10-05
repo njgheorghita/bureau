@@ -1,7 +1,37 @@
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.15;
 import "./Client.sol";
+import "./Loan.sol";
+import "./Bureau.sol";
 
 contract Org {
+  /*
+    ORG INFO
+    struct GeneralInfo
+    GeneralInfo orgInfo
+    uint256 numberOfClients
+    uint256 grossClientDeposits
+    address orgWallet
+    address bureauAddress
+    Org() : 
+    getGeneralInfo() :
+
+    LOANS
+    createLoan() : 
+    mapping (uint256 => address[]) loan repo
+
+    REPORTS
+    struct QuarterlyReport
+    mapping ( id (yyyy#) => QuarterlyReport ) quarterlyReportHistory
+    getQuarterlyReport() :
+    addQuarterlyReport() :
+
+    CLIENTS
+    mapping (numClient => address) clientList
+    getClientPersonalInfoById() :
+    addJobToClientProfile() : onlyBy orgWallet
+    getClient() : returns Client
+    updateGrossDeposits() : 
+  */
   struct GeneralInfo {
     uint256 id;
     bytes32 name;
@@ -9,28 +39,7 @@ contract Org {
     bytes32 country;
     bytes32 currency;
   }
-  GeneralInfo public orgInfo;
-  uint256 public numberOfClients;
-  address public orgWallet;
-  modifier onlyBy(address _account) { require(msg.sender == _account); _; }
-
-
-  function Org(
-    uint256 _id,
-    bytes32 _name,
-    bytes32 _hqAddress,
-    bytes32 _country,
-    bytes32 _currency
-  ) {
-    orgInfo = GeneralInfo(_id, _name, _hqAddress, _country, _currency);
-    orgWallet = msg.sender;
-  }
-
-  function getGeneralInfo() constant returns(uint256,bytes32,bytes32,bytes32,bytes32) {
-    numberOfClients = 0;
-    return (orgInfo.id, orgInfo.name, orgInfo.hqAddress, orgInfo.country, orgInfo.currency);
-  }
-
+  
   struct QuarterlyReport {
     uint256 year; 
     uint256 quarter; 
@@ -43,7 +52,39 @@ contract Org {
     uint256 portfolioAtRisk30Days; 
     uint256 writeOffRatio; 
   }
+  modifier onlyBy(address _account) {require(msg.sender == _account); _;}
   mapping ( uint256 => QuarterlyReport ) public quarterlyReportHistory;
+  mapping ( bytes32 => address ) public clientList;
+  mapping ( bytes32 => address[]) loanRepo;
+  GeneralInfo public orgInfo;
+  uint256 public numberOfClients;
+  uint256 public grossClientDeposits;
+  address public orgWallet;
+  address public bureauAddress;
+  uint256 public totalSuccessfulClientPayments;
+  uint256 public totalClientPayments;
+
+
+  function Org(
+    uint256 _id,
+    bytes32 _name,
+    bytes32 _hqAddress,
+    bytes32 _country,
+    bytes32 _currency,
+    address _orgWallet
+  ) {
+    orgInfo = GeneralInfo(_id, _name, _hqAddress, _country, _currency);
+    orgWallet = _orgWallet;
+    grossClientDeposits = 0;
+    bureauAddress = msg.sender;
+    totalClientPayments = 0;
+    totalSuccessfulClientPayments = 0;
+  }
+
+  function getGeneralInfo() constant returns(uint256,bytes32,bytes32,bytes32,bytes32,address) {
+    numberOfClients = 0;
+    return (orgInfo.id, orgInfo.name, orgInfo.hqAddress, orgInfo.country, orgInfo.currency, orgWallet);
+  }
 
   function getQuarterlyReport(uint256 _id) constant returns (uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256) {
     QuarterlyReport memory currentReport = quarterlyReportHistory[_id];
@@ -90,79 +131,55 @@ contract Org {
     quarterlyReportHistory[_id] = newReport;
   }
 
-  mapping ( uint256 => address ) public clientList;
-
-  function createClient
+  function getClientPersonalInfoById(bytes32 _id) 
+    constant 
+    returns
   (
-    address _clientWallet,
-    bytes32 _name,
-    bytes32 _homeAddress, 
-    bytes32 _birthday, 
-    uint256 _age, 
-    uint8 _gender, 
-    uint8 _education,
-    uint8 _householdSize,
-    uint8 _dependents,
-    bool _married,
-    uint256 _monthlyHouseholdIncome,
-    uint8 _numOfBusinesses,
-    uint8 _numOfEmployees,
-    uint256 _phoneNumber
-  ) onlyBy(orgWallet) {
-    address newClientAddress = new Client(
-      _clientWallet,
-      _name,
-      _homeAddress,
-      _birthday,
-      _age,
-      _gender,
-      _education,
-      _householdSize,
-      _dependents,
-      _married,
-      _monthlyHouseholdIncome,
-      _numOfBusinesses,
-      _numOfEmployees,
-      _phoneNumber
-    );
-    numberOfClients = numberOfClients + 1;
-    clientList[numberOfClients] = newClientAddress;
+    address,bytes32,bytes32,bytes32,uint256,uint8,uint8,uint8,uint8,bool,uint256
+  ) {
+    Client currentClient = getClient(_id);
+    return currentClient.getPersonalInfo();
   }
 
-  function getClientAddressById(uint256 _id) constant returns(address) {
-    return clientList[_id];
-  }
-
-  function addLoanToClientProfile
+  function createLoan
   (
-    uint256 _clientId,
-    uint256 _loanId,
-    uint256 _amount, 
-    bytes32 _startDate,
-    bytes32 _endDate,
-    uint256 _interestRate, 
-    uint8 _numberOfPayments, 
-    bool _status // true - success / false - success
-  ) 
-    onlyBy(orgWallet)
-    returns (bool) 
-  {
-    Client currentClient = getClient(_clientId);
-    currentClient.addLoan(
-      _loanId, _amount, _startDate, _endDate, _interestRate, _numberOfPayments, _status
+    bytes32 _clientId,
+    uint256 _amount,
+    uint256 _durationInMonths,
+    uint256 _monthlyPayment,
+    bytes32 _startDate
+  ) {
+    address clientAddress = getClientAddressFromBureauById(_clientId);
+    clientList[_clientId] = clientAddress;
+    address newLoanAddress = new Loan(
+      _amount, _durationInMonths, _monthlyPayment, 
+      _startDate, this, clientAddress  
     );
-    return true;
+    address[] storage tempAddresses = loanRepo[_clientId];
+    tempAddresses.push(newLoanAddress);
+    Client currentClient = Client(clientAddress);
+    currentClient.addLoanToClient(newLoanAddress);
   }
 
-  function getClient(uint256 _clientId) returns(Client) {
+  function getLoansByClientId(bytes32 _clientId) constant returns(address[]) {
+    return loanRepo[_clientId];
+  }
+
+  function getClient(bytes32 _clientId) private returns(Client) {
     address currentClientAddress = clientList[_clientId];
     Client currentClient = Client(currentClientAddress);
     return currentClient;
   }
 
+  function getClientAddressFromBureauById(bytes32 _clientId) private returns(address) {
+    Bureau currentBureau = Bureau(bureauAddress);
+    address currentClientAddress = currentBureau.findClientAddress(_clientId);
+    return currentClientAddress;
+  }
+
   function addJobToClientProfile
   (
-    uint256 _clientId,
+    bytes32 _clientId,
     bytes32 _title,
     bytes32 _employer,
     bytes32 _workAddress,
@@ -180,13 +197,21 @@ contract Org {
     return true;
   }
 
-  function getGrossClientDeposits() returns(uint) {
-    uint totalDeposits = 0;
-    for (uint i = 0; i <= numberOfClients; i++) {
-      address currentAddress = clientList[i];
-      uint tempBalance = totalDeposits + currentAddress.balance;
-      totalDeposits = tempBalance;
+  function updateGrossDeposits(uint256 _amount, bool _type) {
+    if (_type == true) {
+      grossClientDeposits = grossClientDeposits + _amount;
+    } else {
+      grossClientDeposits = grossClientDeposits - _amount;
     }
-    return totalDeposits;
+  }
+
+  function updateLoanByAddress(address _loanAddress, bool _paymentMade) {
+    Loan currentLoan = Loan(_loanAddress);
+    currentLoan.updateLoanPayment(_paymentMade);
+    address currentClient = currentLoan.clientWallet();
+    Client(currentClient).updateRepaymentRateStats(_paymentMade);
+    if (_paymentMade)
+      totalSuccessfulClientPayments += 1;
+    totalClientPayments += 1;
   }
 }
