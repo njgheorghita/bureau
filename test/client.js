@@ -12,7 +12,7 @@ contract('Client', function() {
       12345,                              // id
       clientWallet,                       // Client wallet address
       "Client",                           // name
-      "1234 5th Street, Denver CO 80218", // homeAddress
+      "1234 5th Street", // homeAddress
       "01/01/2000",                       // birthday
       100,                                // age
       0,                                  // gender
@@ -43,7 +43,7 @@ contract('Client', function() {
     assert.equal(personalInfo[0], clientWallet);
     assert.equal(web3.toAscii(personalInfo[1]).substring(0,6), "Client");
     assert.equal(web3.toAscii(personalInfo[2]).substring(
-      0,32), "1234 5th Street, Denver CO 80218");
+      0,15), "1234 5th Street");
     assert.equal(web3.toAscii(personalInfo[3]).substring(0,10), "01/01/2000");
     assert.equal(web3.toDecimal(personalInfo[4]), 100);
     assert.equal(web3.toDecimal(personalInfo[5]), 0);
@@ -53,35 +53,6 @@ contract('Client', function() {
     assert.equal(personalInfo[9], false);
     assert.equal(web3.toDecimal(personalInfo[10]), 1231221323);
   });
-
-  it('can add a job to the profile', async function() {
-    let addJob = await client.addJob(
-      "Baker",        // title
-      "My Bakery",    // Employer
-      "11 First St.", // work address
-      "01/01/2000",   // start date
-      "01/01/2001",   // end date
-      100             // monthly salary
-    )
-
-    let jobHistory = await client.getJob(1);
-    assert.equal(web3.toAscii(jobHistory[0]).substring(0,5), "Baker");
-    assert.equal(web3.toAscii(jobHistory[1]).substring(0,9), "My Bakery");
-    assert.equal(web3.toAscii(jobHistory[2]).substring(0,12), "11 First St.");
-    assert.equal(web3.toAscii(jobHistory[3]).substring(0,10), "01/01/2000");
-    assert.equal(web3.toAscii(jobHistory[4]).substring(0,10), "01/01/2001");
-    assert.equal(web3.toDecimal(jobHistory[5]), 100);
-  });
-
-  it('only allows org to add job to profile', async function() {
-    try {
-      await client.addJob(
-        "Baker", "My Bakery", "11 First St.", "1/1/2001", "1/1/2002", 100, {from: web3.eth.accounts[5]}
-      )
-    } catch(err) {
-      assert.include(String(err), "invalid opcode");
-    }
-  })
 
   it('can deposit multiple savings to the contract', async function() {
     await client.deposit({value: 100, from: clientWallet});

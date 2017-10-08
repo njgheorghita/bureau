@@ -5,7 +5,6 @@
  */
 
 /// @dev Org's id pointing to their address
-/// @param
 mapping (uint256 => address) public orgList;
 
 /// @dev Stores org addresses to auth for Ballot.sol

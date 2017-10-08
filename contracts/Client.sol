@@ -1,42 +1,10 @@
 pragma solidity ^0.4.15;
 import "./Org.sol";
+import "./Loan.sol";
+import "./HasLoans.sol";
 
-contract Client {
-  /*
-    CLIENT INFO
-    struct PersonalInfo
-    PersonalInfo clientInfo
-    address clientWallet
-    address orgWallet // not good
-    Client() : 
-    getPersonalInfo() : onlyByOrgOrClient
+contract Client is HasLoans {
 
-    !! add fields for monthlyHouseholdIncome, numOfBusinesses, numOfEmployees?
-
-    JOBS
-    struct Job
-    mapping (#job => Job )
-    uint256 numberofjobs
-    addJob() : onlyBy(orgWallet)
-    getJob() :
-
-    LOANS
-    struct Loan
-    mapping (_id => Loan) loanHistory
-    uint256[] loanIds
-    addLoan() : onlyBy(orgWallet)
-    getLoanRepaymentRate() : 
-    getLoan() : 
-
-    SAVINGS
-    struct SavingsTx
-    uint256 numOfSavingsTx
-    mapping (#ofSavingsTx => SavingsTx) savingsTxHistory
-    deposit() : onlyBy(clientWallet)
-    getSavingsTx() :
-    withdrawFunds() : onlyBy(clientWallet)
-
-  */
   struct PersonalInfo {
     bytes32 name;
     bytes32 homeAddress;
@@ -50,27 +18,22 @@ contract Client {
     uint256 phoneNumber; // 0 for doesn't have one
   }
 
-  struct Job {
-    bytes32 title;
-    bytes32 employer;
-    bytes32 workAddress;
-    bytes32 startDate;
-    bytes32 endDate;
-    uint256 monthlySalary;
-  }
   struct SavingsTx {
     uint256 amount;
     uint256 datetime;
     bool txType;  // true = deposit, false = withdrawal
   }
   mapping ( uint256 => SavingsTx ) savingsTxHistory;
-  mapping ( uint256 => Job ) public jobHistory;
   PersonalInfo public clientInfo;
   address[] public loanAddresses;
   bytes32 public clientId;
   uint256 public numberOfJobs;
   bytes32 public clientName;
+  bytes32 public clientHomeAddress;
   bytes32 public clientBirthday;
+  uint256 public clientPhone;
+  bool public clientMarried;
+  uint8 public clientGender;
   address public clientWallet;
   address public orgWallet;
   uint256 public numberOfSavingsTxs;
@@ -109,6 +72,8 @@ contract Client {
     });
     orgWallet = msg.sender;
     clientWallet = _clientWallet;
+    clientHomeAddress = _homeAddress;
+    clientGender = _gender;
     totalNumberOfPayments = 0;
     totalNumberOfSuccessfulPayments = 0;
     numberOfJobs = 0;
@@ -116,6 +81,8 @@ contract Client {
     clientName = _name;
     clientBirthday = _birthday;
     clientId = _id;
+    clientPhone = _phoneNumber;
+    clientMarried = _married;
   }
 
   function addLoanToClient(address _loanAddress) {
@@ -126,7 +93,13 @@ contract Client {
     return loanAddresses;
   }
 
-  function getPersonalInfo() constant onlyByOrgOrClient() returns (
+  function getNumberOfLoans() constant returns(uint) {
+    return loanAddresses.length;
+  }
+
+  function getPersonalInfo() 
+    constant 
+  returns (
     address clientWalletAddress,
     bytes32 name, 
     bytes32 homeAddress, 
@@ -151,33 +124,6 @@ contract Client {
       clientInfo.dependents,
       clientInfo.married,
       clientInfo.phoneNumber
-    );
-  }
-
-  function addJob(
-    bytes32 _title,
-    bytes32 _employer,
-    bytes32 _workAddress,
-    bytes32 _startDate,
-    bytes32 _endDate,
-    uint256 _monthlySalary
-  ) 
-    onlyBy(orgWallet) 
-  {
-    numberOfJobs = numberOfJobs + 1;
-    Job memory newJob = Job(_title, _employer, _workAddress, _startDate, _endDate, _monthlySalary);
-    jobHistory[numberOfJobs] = newJob;
-  }
-
-  function getJob(uint256 _id) constant returns (bytes32, bytes32, bytes32, bytes32, bytes32, uint256) {
-    Job memory currentJob = jobHistory[_id];
-    return (
-      currentJob.title,
-      currentJob.employer,
-      currentJob.workAddress,
-      currentJob.startDate,
-      currentJob.endDate,
-      currentJob.monthlySalary
     );
   }
 
