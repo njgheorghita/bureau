@@ -29,12 +29,12 @@ contract('Org', function() {
   it('it instantiates correctly', async function() {
     let orgInfo = await org.getGeneralInfo();
 
-    assert.equal(web3.toDecimal(orgInfo[0]), 123);
-    assert.equal(web3.toAscii(orgInfo[1]).substring(0,3), "MFI");
-    assert.equal(web3.toAscii(orgInfo[2]).substring(0,13), "111 First St.");
-    assert.equal(web3.toAscii(orgInfo[3]).substring(0,3), "USA");
-    assert.equal(web3.toAscii(orgInfo[4]).substring(0,1), "$");
-    assert.equal(orgInfo[5], orgWallet);
+    assert.equal(web3.toDecimal(orgInfo[1]), 123);
+    assert.equal(web3.toAscii(orgInfo[2]).substring(0,3), "MFI");
+    assert.equal(web3.toAscii(orgInfo[3]).substring(0,13), "111 First St.");
+    assert.equal(web3.toAscii(orgInfo[4]).substring(0,3), "USA");
+    assert.equal(web3.toAscii(orgInfo[5]).substring(0,1), "$");
+    assert.equal(orgInfo[6], orgWallet);
   });
 
   it('can add a quarterly report', async function() {
@@ -80,14 +80,23 @@ contract('Org', function() {
 
     // });
 
-    it('can start a loan with a client and adds loan to clients profile', async function() {
-      await org2.createLoan(111,100,10,10,"1/1/1111");
-      let clientLoans = await org2.getLoansByClientId(111);
-      let clientPortfolio = await client.getLoanAddresses();
+  it('can start a loan with a client and adds loan to clients profile', async function() {
+    await org2.createLoan(111,100,10,10,"1/1/1111");
+    let clientLoans = await org2.getLoansByClientId(111);
+    let clientPortfolio = await client.getLoanAddresses();
 
-      assert.equal(clientPortfolio[0], clientLoans[0]);
-      assert.notInclude(clientLoans[0], "000000000");
-    });
+    assert.equal(clientPortfolio[0], clientLoans[0]);
+    assert.notInclude(clientLoans[0], "000000000");
+  });
+
+  it('can get a list of client ids', async function() {
+    await org2.createLoan(111,100,10,10,"1/1/1111");
+    await org2.createLoan(111,100,10,10,"1/1/1111");
+    await org2.createLoan(111,100,10,10,"1/1/1111");
+    let clientIds = await org2.getClientInfoForOrg();
+
+    assert.equal(clientIds.length, 3);
+  })
 
 
   it('can update loan payments and keeps track of org + clients rep score', async function() {

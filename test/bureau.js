@@ -29,7 +29,7 @@ contract('Bureau', function() {
     );
 
     let newOrg = await bureau.getOrgInfoById(123);
-    assert.equal(newOrg[0], 123);
+    assert.equal(newOrg[1], 123);
   });
 
   it('can return appropriate data for front end', async function() {

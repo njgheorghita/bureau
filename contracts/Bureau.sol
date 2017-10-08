@@ -108,7 +108,7 @@ contract Bureau {
   // @param uint256 _id
   function getOrgInfoById(uint256 _id) 
     constant 
-    returns (uint256, bytes32, bytes32, bytes32, bytes32, address)
+    returns (address, uint256, bytes32, bytes32, bytes32, bytes32, address)
   {
     Org currentOrg = getOrg(_id);
     return currentOrg.getGeneralInfo();

@@ -49,6 +49,7 @@ contract Controller {
   function getBasicOrgInfoById(uint256 _orgId) 
     constant
     returns(
+      address,
       uint256,
       bytes32,
       bytes32,
@@ -60,9 +61,10 @@ contract Controller {
       bytes32 hqAddress;
       bytes32 country;
       bytes32 currency;
+      address orgAddress;
 
-      (id, name, hqAddress, country, currency, ) = Bureau(bureauAddress).getOrgInfoById(_orgId);
-      return(id, name, hqAddress, country, currency);
+      (orgAddress, id, name, hqAddress, country, currency, ) = Bureau(bureauAddress).getOrgInfoById(_orgId);
+      return(orgAddress, id, name, hqAddress, country, currency);
     }
   
   // return detailed data for an org
@@ -117,7 +119,7 @@ contract Controller {
     constant
   returns(
     bytes32, // id
-    address, // wallet 
+    address, // profile address 
     bytes32, // homeAddress
     uint256, // gender
     uint256, // phonenumber
@@ -131,7 +133,7 @@ contract Controller {
     Client currentClient = Client(clientAddress);
     return (
       _clientId,
-      currentClient.clientWallet(),
+      clientAddress,
       currentClient.clientHomeAddress(),
       currentClient.clientGender(),
       currentClient.clientPhone(),

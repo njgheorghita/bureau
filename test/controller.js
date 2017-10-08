@@ -68,7 +68,7 @@ contract('Controller', function () {
     let orgLoanData = await controller.getBasicOrgInfoById(123);
     let orgLoanDetails = await controller.getDetailedOrgInfoById(123);
 
-    assert.equal(orgLoanData.length, 5);
+    assert.equal(orgLoanData.length, 6);
     assert.equal(orgLoanDetails.length, 4);
   });
 

@@ -113,9 +113,13 @@ contract Org is HasLoans {
 
   /// @dev Getter for general info about Org
   /// @dev Returns id, name, hqAddress, country, currency, orgWallet
-  function getGeneralInfo() constant returns(uint256,bytes32,bytes32,bytes32,bytes32,address) {
+  function getGeneralInfo() constant returns(address, uint256,bytes32,bytes32,bytes32,bytes32,address) {
     numberOfClients = 0;
-    return (orgId, orgName, orgHqAddress, orgCountry, orgCurrency, orgWallet);
+    return (this, orgId, orgName, orgHqAddress, orgCountry, orgCurrency, orgWallet);
+  }
+
+  function getClientInfoForOrg() constant returns(bytes32[]) {
+    return clientIds;
   }
 
   function getDetailedInfo() constant returns(uint256, uint256, uint256, uint256) {
