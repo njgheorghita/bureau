@@ -29,17 +29,27 @@ contract('Bureau', function() {
     );
 
     let newOrg = await bureau.getOrgInfoById(123);
-    assert.equal(newOrg[0], 123);
+    assert.equal(newOrg[1], 123);
   });
 
-  context("voting", async function() {
-    it('it can create a ballot', async function() {
-      await bureau.createBallot(["First", "Second"]);
-      let ballotAddresses = await bureau.ballotAddresses(0);
+  it('can return appropriate data for front end', async function() {
+    await bureau.addOrgToBureau(1,"MFI1","ADDRESS1","USA","USD",web3.eth.accounts[5]);
+    await bureau.addOrgToBureau(2,"MFI2","ADDRESS2","MEX","PESO",web3.eth.accounts[6]);
+    let orgData = await bureau.getAllOrgInfo();
+    assert.equal(web3.toDecimal(orgData[0][0]), 1)
+    assert.equal(web3.toDecimal(orgData[0][1]), 2)
+    assert.equal(web3.toAscii(orgData[1][0]).substring(0,4), "MFI1")
+    assert.equal(web3.toAscii(orgData[1][1]).substring(0,4), "MFI2")
+  });
 
-      assert.notInclude(ballotAddresses[0], "0000000")
-    })
-  })
+  // context("voting", async function() {
+  //   it('it can create a ballot', async function() {
+  //     await bureau.createBallot(["First", "Second"]);
+  //     let ballotAddresses = await bureau.ballotAddresses(0);
+
+  //     assert.notInclude(ballotAddresses[0], "0000000")
+  //   })
+  // })
 
   context("with a client", async function() {
     beforeEach(async function() {
