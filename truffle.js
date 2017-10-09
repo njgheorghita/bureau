@@ -1,8 +1,9 @@
 module.exports = {
   networks: {
     development: {
-      host: "localhost",
-      port: 8545,
+      host: "https://37d3d7e0.ngrok.io/",
+      from: "0xebc5e9481440a6bf09f4fc7bda2c6ab2d89997b0",     
+      gas: 4612388,      
       network_id: "*" // Match any network id
     },
     rinkeby: {

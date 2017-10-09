@@ -26,9 +26,6 @@ contract Bureau {
     mapping (bytes32 => address) public clientList;
     bytes32[] public clientIds;
 
-    /// @dev Stores array of all created ballot addresses
-    address[] public ballotAddresses;
-
     /*
      *  Fallback Function
      */ 
