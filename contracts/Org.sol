@@ -4,11 +4,12 @@ import "./Loan.sol";
 import "./Bureau.sol";
 import "./HasLoans.sol";
 
+/// @title Org contract - represents an organization and manages their interactions with bureau and clients
+/// @author Nick Gheorghita - <nickgheorghita@gmail.com>
 contract Org is HasLoans {
   /*
    *  Storage
    */
-
   struct QuarterlyReport {
     uint256 grossLoanPortfolio; 
     uint256 numOfActiveBorrowers; 
@@ -26,32 +27,11 @@ contract Org is HasLoans {
   mapping ( bytes32 => address ) public clientList;
   bytes32[] public clientIds;
 
-  function getNumberOfClients() constant returns(uint) {
-    return clientIds.length;
-  }
-
   /// @dev Stores a list of loans between a Client (based on clientId) and the Org
   mapping ( bytes32 => address[]) loanRepo;
   address[] public loanAddresses;
 
-  function getNumberOfLoans() constant returns(uint) {
-    return loanAddresses.length;
-  }
-
-  function getNumberOfQrs() constant returns(uint) {
-    return quarterlyReportList.length;
-  }
-
-  function getLoanAddresses() returns(address[]) {
-    uint length = loanAddresses.length;
-    address[] memory addresses = new address[](length);
-
-    for (uint i = 0; i < length; i++) {
-      addresses[i] = loanAddresses[i];
-    }
-    return addresses;
-  }
-  
+  /// @dev General info about Org set in constructor
   uint256 public orgId;
   bytes32 public orgName;
   bytes32 public orgHqAddress;
@@ -59,7 +39,7 @@ contract Org is HasLoans {
   bytes32 public orgCurrency;
   uint256 public numberOfClients;
 
-  /// @dev !!!! needs to be fixed & changed to collateral
+  /// @dev Counter for gross client deposits
   uint256 public grossClientDeposits;
 
   /// @dev wallet that controls the Org's txs: used for auth
@@ -68,22 +48,26 @@ contract Org is HasLoans {
   /// @dev wallet of the bureau this Org belongs to: there's only one Bureau
   address public bureauAddress;
 
-  /// @dev Stats used to calculate the Org's repayment rate (aka reputation score)
+  /// @dev Stats used to calculate the Org's repayment rate 
+  /// @dev Repayment rate (aka reputation score) = totalSuccessfulClientPayments/totalClientPayments
   uint256 public totalSuccessfulClientPayments;
   uint256 public totalClientPayments;
 
   /*
    *  Modifiers
    */
-
   /// @dev Authentication
   // @param address _account
   modifier onlyBy(address _account) {require(msg.sender == _account); _;}
 
   /*
+   *  Fallback Function
+   */ 
+  function () payable { revert(); }
+
+  /*
    *  Public Functions
    */
-
   /// @dev Constructor & Initializes certain counter variables
   // @param uint256 _id
   // @param bytes32 _name
@@ -111,32 +95,74 @@ contract Org is HasLoans {
     orgCurrency = _currency;
   }
 
+  /// @dev Getter for total number of loans belonging to an org
+  function getNumberOfLoans() 
+    constant 
+    returns (uint) 
+  {
+    return loanAddresses.length;
+  }
+
+  /// @dev Getter for total number of QRs added to an org
+  function getNumberOfQrs() 
+    constant 
+    returns (uint) 
+  {
+    return quarterlyReportList.length;
+  }
+
+  /// @dev Getter for all loan addresses belonging to an org
+  function getLoanAddresses() 
+    returns (address[]) 
+  {
+    uint length = loanAddresses.length;
+    address[] memory addresses = new address[](length);
+    for (uint i = 0; i < length; i++) {
+      addresses[i] = loanAddresses[i];
+    }
+    return addresses;
+  }
+  
+  /// @dev Getter for total number of clients belonging to an org
+  // @todo not quite accurate as there will be duplicate ids in clientIds[]
+  function getNumberOfClients() 
+    constant 
+    returns (uint) 
+  {
+    return clientIds.length;
+  }
+
   /// @dev Getter for general info about Org
   /// @dev Returns id, name, hqAddress, country, currency, orgWallet
-  function getGeneralInfo() constant returns(address, uint256,bytes32,bytes32,bytes32,bytes32,address) {
+  function getGeneralInfo() 
+    constant 
+    returns (address, uint256,bytes32,bytes32,bytes32,bytes32,address) 
+  {
     numberOfClients = 0;
     return (this, orgId, orgName, orgHqAddress, orgCountry, orgCurrency, orgWallet);
   }
 
-  function getClientInfoForOrg() constant returns(bytes32[]) {
+  /// @dev Getter for all client ids belonging to an org
+  function getClientInfoForOrg() 
+    constant 
+    returns (bytes32[]) 
+  {
     return clientIds;
   }
 
-  function getDetailedInfo() constant returns(uint256, uint256, uint256, uint256) {
-    return(numberOfClients, grossClientDeposits, totalSuccessfulClientPayments, totalClientPayments);
+  /// @dev Returns detailed information about this Org
+  function getDetailedInfo() 
+    constant 
+    returns (uint256, uint256, uint256, uint256) 
+  {
+    return (numberOfClients, grossClientDeposits, totalSuccessfulClientPayments, totalClientPayments);
   }
 
+  /// @dev Getter for QR data stored in this Org contract
   function getQuarterlyReportData()
     constant
-    returns
-  (
-    uint256[],
-    uint256[],
-    uint256[],
-    uint256[],
-    uint256[],
-    uint256[]
-  ) {
+    returns (uint256[],uint256[],uint256[],uint256[],uint256[],uint256[]) 
+  {
     uint length = quarterlyReportList.length;
     uint256[] memory ids = new uint256[](length);
     uint256[] memory grossPortfolios = new uint256[](length);
@@ -157,7 +183,14 @@ contract Org is HasLoans {
     return(ids, grossPortfolios, activeBorrowers, grossDeposits, totalPayments, totalSuccess);
   }
 
-
+  /// @dev Add a QR to this org's quarterlyReportHistory
+  // @param _id qrReport id (YYYYQ) (i.e. 20011, 20012, 20013, 20014, 20021 . . .)
+  // @param _grossLoanPortfolio gross number of $$ currently in active loan portfolios
+  // @param _numOfActiveBorrowers 
+  // @param _grossDepositsPortfolio gross $$ currently held in collateral by clients
+  // @param _numOfDepositors number of clients with collateral
+  // 
+  // also stores the fields totalSuccessfulClientPayments and totalClientPayments
   function addQuarterlyReport(
     uint256 _id, 
     uint256 _grossLoanPortfolio, 
@@ -182,10 +215,8 @@ contract Org is HasLoans {
   ///      householdSize, dependents, married, phoneNumber
   function getClientPersonalInfoById(bytes32 _id) 
     constant 
-    returns
-  (
-    address,bytes32,bytes32,bytes32,uint256,uint8,uint8,uint8,uint8,bool,uint256
-  ) {
+    returns (address,bytes32,bytes32,bytes32,uint256,uint8,uint8,uint8,uint8,bool,uint256) 
+  {
     Client currentClient = getClient(_id);
     return currentClient.getPersonalInfo();
   }
@@ -193,7 +224,7 @@ contract Org is HasLoans {
   /// @dev Getter for all clients & basic data for frontend
   function getAllClientData() 
     constant
-    returns(address[], bytes32[], uint256[], uint256[], uint256[])
+    returns (address[], bytes32[], uint256[], uint256[], uint256[])
   {
     uint length = clientIds.length;
     address[] memory clientAddresses = new address[](length);
@@ -211,7 +242,7 @@ contract Org is HasLoans {
       paymentCounts[i] = currentClient.totalNumberOfPayments();
       successfulPaymentCounts[i] = currentClient.totalNumberOfSuccessfulPayments();
     }
-    return(clientAddresses, tempClientIds, numberOfLoans, paymentCounts, successfulPaymentCounts);
+    return (clientAddresses, tempClientIds, numberOfLoans, paymentCounts, successfulPaymentCounts);
   }
 
   /// @dev Creates a new loan contract between Org & Client
@@ -248,14 +279,18 @@ contract Org is HasLoans {
 
   /// @dev Getter for array of loans via _clientId from loanRepo mapping
   // @param bytes32 _clientId
-  function getLoansByClientId(bytes32 _clientId) constant returns(address[]) {
+  function getLoansByClientId(bytes32 _clientId) 
+    constant 
+    returns (address[]) 
+  {
     return loanRepo[_clientId];
   }
 
   /// @dev Updates grossClientDeposits - called from Client contract
   // @param uint256 _amount
   // @param bool _type
-  function updateGrossDeposits(uint256 _amount, bool _type) {
+  function updateGrossDeposits(uint256 _amount, bool _type) 
+  {
     if (_type == true) {
       grossClientDeposits = grossClientDeposits + _amount;
     } else {
@@ -266,7 +301,8 @@ contract Org is HasLoans {
   /// @dev Updates an already created Loan contract on whether a payment was made
   // @param address _loanAddress
   // @param bool _paymentMade
-  function updateLoanByAddress(address _loanAddress, bool _paymentMade) {
+  function updateLoanByAddress(address _loanAddress, bool _paymentMade) 
+  {
     Loan currentLoan = Loan(_loanAddress);
     currentLoan.updateLoanPayment(_paymentMade);
     address currentClient = currentLoan.clientWallet();
@@ -281,7 +317,10 @@ contract Org is HasLoans {
    */
   /// @dev Getter for Client object via _clientId
   // @param bytes32 _clientId
-  function getClient(bytes32 _clientId) private returns(Client) {
+  function getClient(bytes32 _clientId) 
+    private 
+    returns (Client) 
+  {
     address currentClientAddress = clientList[_clientId];
     Client currentClient = Client(currentClientAddress);
     return currentClient;
@@ -289,7 +328,10 @@ contract Org is HasLoans {
 
   /// @dev Getter for Client address from Bureau via _clientId for search functionality
   /// @ param bytes32 _clientId
-  function getClientAddressFromBureauById(bytes32 _clientId) private returns(address) {
+  function getClientAddressFromBureauById(bytes32 _clientId) 
+    private 
+    returns (address) 
+  {
     Bureau currentBureau = Bureau(bureauAddress);
     address currentClientAddress = currentBureau.findClientAddress(_clientId);
     return currentClientAddress;

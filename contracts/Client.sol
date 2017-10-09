@@ -3,47 +3,51 @@ import "./Org.sol";
 import "./Loan.sol";
 import "./HasLoans.sol";
 
+/// @title Client contract - profile and data storage for a client (aka borrower) belonging to a Bureau
+/// @author Nick Gheorghita - <nickgheorghita@gmail.com>
 contract Client is HasLoans {
 
-  struct PersonalInfo {
-    bytes32 name;
-    bytes32 homeAddress;
-    bytes32 birthday;
-    uint256 age; 
-    uint8 gender; // gender 0 = female, 1 = male
-    uint8 education; // 0 = none / 1 = ma / 2 = hs / 3 = college / 4 = masters
-    uint8 householdSize;
-    uint8 dependents;
-    bool married;
-    uint256 phoneNumber; // 0 for doesn't have one
-  }
-
+  /*
+   *  Storage
+   */
   struct SavingsTx {
     uint256 amount;
     uint256 datetime;
     bool txType;  // true = deposit, false = withdrawal
   }
   mapping ( uint256 => SavingsTx ) savingsTxHistory;
-  PersonalInfo public clientInfo;
   address[] public loanAddresses;
   bytes32 public clientId;
-  uint256 public numberOfJobs;
   bytes32 public clientName;
   bytes32 public clientHomeAddress;
   bytes32 public clientBirthday;
-  uint256 public clientPhone;
+  uint256 public clientAge;
+  uint8 public clientGender;       // gender 0 = female, 1 = male
+  uint8 public clientEducation;    // 0 = none / 1 = ma / 2 = hs / 3 = college / 4 = masters
+  uint8 public clientDependents;
+  uint8 public clientHouseholdSize;
   bool public clientMarried;
-  uint8 public clientGender;
+  uint256 public clientPhone;
   address public clientWallet;
-  address public orgWallet;
   uint256 public numberOfSavingsTxs;
   uint256 public totalNumberOfPayments;
   uint256 public totalNumberOfSuccessfulPayments;
+  
+  /*
+   *  Modifiers
+   */
+  /// @dev Manages authorization for deposits
   modifier onlyBy(address _account) {require(msg.sender == _account); _;}
-  modifier onlyByOrgOrClient() {
-    require(msg.sender == orgWallet || msg.sender == clientWallet); _;
-  }
 
+  /*
+   *  Fallback Function
+   */ 
+  function () payable { revert(); }
+
+  /*
+   *  Public Functions
+   */
+  /// @dev Constructor sets client storage variables and initializes counters
   function Client(
     bytes32 _id,
     address _clientWallet,
@@ -58,45 +62,46 @@ contract Client is HasLoans {
     bool _married,
     uint256 _phoneNumber
   ) {
-    clientInfo = PersonalInfo({
-      name: _name,
-      homeAddress: _homeAddress,
-      birthday: _birthday,
-      age: _age,
-      gender: _gender,
-      education: _education,
-      householdSize: _householdSize,
-      dependents: _dependents,
-      married: _married,
-      phoneNumber: _phoneNumber
-    });
-    orgWallet = msg.sender;
-    clientWallet = _clientWallet;
+    clientId = _id;
+    clientName = _name;
     clientHomeAddress = _homeAddress;
+    clientBirthday = _birthday;
+    clientAge = _age;
     clientGender = _gender;
+    clientEducation = _education;
+    clientDependents = _dependents;
+    clientHouseholdSize = _householdSize;
+    clientMarried = _married;
+    clientPhone = _phoneNumber;
+    clientWallet = _clientWallet;
     totalNumberOfPayments = 0;
     totalNumberOfSuccessfulPayments = 0;
-    numberOfJobs = 0;
     numberOfSavingsTxs = 0;
-    clientName = _name;
-    clientBirthday = _birthday;
-    clientId = _id;
-    clientPhone = _phoneNumber;
-    clientMarried = _married;
   }
 
-  function addLoanToClient(address _loanAddress) {
+  /// @dev Adds a Loan contract address to client's loanAddresses[] when an Org creates one for this client
+  function addLoanToClient(address _loanAddress) 
+  {
     loanAddresses.push(_loanAddress);
   }
 
-  function getLoanAddresses() constant returns(address[]) {
+  /// @dev Getter for all Loan contract addresses belonging to this client
+  function getLoanAddresses() 
+    constant 
+    returns (address[]) 
+  {
     return loanAddresses;
   }
 
-  function getNumberOfLoans() constant returns(uint) {
+  /// @dev Getter for count of Loans belonging to this client
+  function getNumberOfLoans() 
+    constant 
+    returns (uint) 
+  {
     return loanAddresses.length;
   }
 
+  /// @dev Getter for personal details about this client
   function getPersonalInfo() 
     constant 
   returns (
@@ -114,38 +119,41 @@ contract Client is HasLoans {
   ) {
     return ( 
       clientWallet,
-      clientInfo.name,
-      clientInfo.homeAddress,
-      clientInfo.birthday,
-      clientInfo.age,
-      clientInfo.gender,
-      clientInfo.education,
-      clientInfo.householdSize,
-      clientInfo.dependents,
-      clientInfo.married,
-      clientInfo.phoneNumber
+      clientName,
+      clientHomeAddress,
+      clientBirthday,
+      clientAge,
+      clientGender,
+      clientEducation,
+      clientHouseholdSize,
+      clientDependents,
+      clientMarried,
+      clientPhone
     );
   }
 
+  /// @dev Deposit collateral/savings/ether into this account
   function deposit() 
     payable 
-    onlyBy(clientWallet)
-    returns(bool) 
+    returns (bool) 
   {
     uint256 amount = msg.value;
     require(amount > 0);
     numberOfSavingsTxs = numberOfSavingsTxs + 1;
     SavingsTx memory newSavingsTx = SavingsTx(amount, now, true);
     savingsTxHistory[numberOfSavingsTxs] = newSavingsTx;
-    // why do these throw?
-    // Org(orgWallet).updateGrossDeposits(amount, true);
     return true;
   }
 
-  function getSavingsTx(uint256 _id) constant returns(uint256, uint256, bool) {
+  /// @dev Getter for a particular savings tx (aka deposit or withdrawal)
+  function getSavingsTx(uint256 _id) 
+    constant 
+    returns (uint256, uint256, bool) 
+  {
     return (savingsTxHistory[_id].amount, savingsTxHistory[_id].datetime, savingsTxHistory[_id].txType);
   }
 
+  /// @dev Allows only the client to withdraw funds stored in their contract
   function withdrawFunds(uint256 _amount) 
     onlyBy(clientWallet)
     returns (bool) 
@@ -154,13 +162,14 @@ contract Client is HasLoans {
     numberOfSavingsTxs = numberOfSavingsTxs + 1;
     SavingsTx memory newSavingsTx = SavingsTx(_amount, now, false);
     savingsTxHistory[numberOfSavingsTxs] = newSavingsTx;
-    // why do these throw?
-    // Org(orgWallet).updateGrossDeposits(_amount, false);
     msg.sender.transfer(_amount);
     return true;
   }
 
-  function updateRepaymentRateStats(bool _paymentMade) public {
+  /// @dev Updates stats on clients repayments (totalNumber . . .)
+  function updateRepaymentRateStats(bool _paymentMade) 
+    public 
+  {
     if (_paymentMade)
       totalNumberOfSuccessfulPayments += 1;
     totalNumberOfPayments += 1;

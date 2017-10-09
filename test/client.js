@@ -12,7 +12,7 @@ contract('Client', function() {
       12345,                              // id
       clientWallet,                       // Client wallet address
       "Client",                           // name
-      "1234 5th Street", // homeAddress
+      "1234 5th Street",                  // homeAddress
       "01/01/2000",                       // birthday
       100,                                // age
       0,                                  // gender
@@ -25,15 +25,11 @@ contract('Client', function() {
   });
 
   it('is instantiated properly', async function() {
-    let numOfJobs = await client.numberOfJobs();
     let personalInfo = await client.getPersonalInfo();
     let clientWalletAddress = await client.clientWallet();
-    let orgWalletAddress = await client.orgWallet();
 
-    assert.equal(web3.toDecimal(numOfJobs), 0);
     assert.equal(personalInfo.length, 11)
     assert.equal(clientWalletAddress, clientWallet);
-    assert.equal(orgWalletAddress, web3.eth.accounts[0]);
   });
 
   it('returns client personal data properly', async function() {
@@ -42,8 +38,7 @@ contract('Client', function() {
     assert.equal(personalInfo.length, 11)
     assert.equal(personalInfo[0], clientWallet);
     assert.equal(web3.toAscii(personalInfo[1]).substring(0,6), "Client");
-    assert.equal(web3.toAscii(personalInfo[2]).substring(
-      0,15), "1234 5th Street");
+    assert.equal(web3.toAscii(personalInfo[2]).substring(0,15), "1234 5th Street");
     assert.equal(web3.toAscii(personalInfo[3]).substring(0,10), "01/01/2000");
     assert.equal(web3.toDecimal(personalInfo[4]), 100);
     assert.equal(web3.toDecimal(personalInfo[5]), 0);

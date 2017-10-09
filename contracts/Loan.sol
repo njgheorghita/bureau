@@ -1,9 +1,13 @@
 pragma solidity ^0.4.15;
 
+/// @title Loan contract - Loan contract storing the details and repayment stats for 
+///                         a loan between an Org and Client
+/// @author Nick Gheorghita - <nickgheorghita@gmail.com>
 contract Loan {
 
-  enum Status { Started, Default, Complete }
-  modifier onlyWithStatus(Status _loanStatus) {require(loanStatus == _loanStatus); _;}
+  /*
+   *  Storage
+   */
   mapping ( uint256 => bool ) paymentHistory;
   uint256 public loanAmount;
   uint256 public loanDurationInMonths;
@@ -15,7 +19,20 @@ contract Loan {
   uint256 public currentPaymentCount;
   uint256 public currentSuccessfulPayments;
 
-  function Loan
+  /*
+   *  Modifiers
+   */
+  modifier onlyWithStatus(Status _loanStatus) {require(loanStatus == _loanStatus); _;}
+  
+  /*
+   *  Enumerables
+   */ 
+  enum Status { Started, Default, Complete }
+  
+  /*
+   *  Public Functions
+   */
+  function Loan 
   (
     uint256 _amount,
     uint256 _durationInMonths,
@@ -35,7 +52,12 @@ contract Loan {
     loanStartDate = _startDate;
   }
 
-  function getLoanStatus() constant returns(bytes32) {
+  /// @dev Getter for loan's current status
+  /// @dev Returns a bytestring of the status not an integer
+  function getLoanStatus() 
+    constant 
+    returns (bytes32) 
+  {
     if (loanStatus == Status.Complete) {
       return "Complete";
     } else if (loanStatus == Status.Default) {
@@ -45,22 +67,24 @@ contract Loan {
     }
   }
 
-  function getLoanInfo() constant returns
-  (
-    uint256, 
-    uint256, 
-    uint256, 
-    bytes32, 
-    address, 
-    address
-  ) {
+  /// @dev Getter for loan details
+  /// @dev Returns: amount, durationInMonths, monthlyPayment, startDate, orgWallet, clientWallet
+  function getLoanInfo() 
+    constant 
+    returns (uint256,uint256,uint256,bytes32,address,address) 
+  {
     return (
-      loanAmount, loanDurationInMonths, loanMonthlyPayment,
-      loanStartDate, orgWallet, clientWallet
+      loanAmount, 
+      loanDurationInMonths, 
+      loanMonthlyPayment,
+      loanStartDate, 
+      orgWallet, 
+      clientWallet
     );
   }
 
-  function updateLoanPayment(bool _paymentMade) {
+  function updateLoanPayment(bool _paymentMade) 
+  {
     currentPaymentCount = currentPaymentCount + 1;
     paymentHistory[currentPaymentCount] = _paymentMade;
     if (_paymentMade == true) {
@@ -68,7 +92,8 @@ contract Loan {
     }
   }
 
-  function finalizeLoan(bool _onTime) {
+  function finalizeLoan(bool _onTime) 
+  {
     if (_onTime == true) {
       loanStatus = Status.Complete;
     } else {
