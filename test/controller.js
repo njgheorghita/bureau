@@ -59,7 +59,6 @@ contract('Controller', function () {
     assert.equal(web3.toDecimal(orgLoanData[0][1]), 2000);
     assert.equal(web3.toDecimal(orgLoanData[5][0]), 0);
     assert.equal(web3.toDecimal(orgLoanData[5][1]), 0);
-
     assert.equal(clientLoanData.length, 6);
     assert.equal(web3.toDecimal(clientLoanData[0][0]), 1000);
   });
@@ -82,18 +81,21 @@ contract('Controller', function () {
 
   it('can return list of clientIds that belong to an Org', async function() {
     let clientIds = await controller.getClientIdsForOrg(123);
+
     assert.equal(clientIds.length, 2);
     assert.equal(web3.toAscii(clientIds[0]).substring(0,17), "BOBDOE-01/01/2001");
   })
 
   it('can return a list of all clientIds', async function() {
     let clientIds = await controller.getAllClientIds();
+
     assert.equal(clientIds.length, 2);
     assert.equal(web3.toAscii(clientIds[0]).substring(0,17), "BOBDOE-01/01/2001");
   })
 
   it('can return detailed info for a client', async function() {
     let clientInfo = await controller.getClientDetailsById("BOBDOE-01/01/2001");
+
     assert.equal(clientInfo.length, 9);
   })
 
