@@ -14,5 +14,5 @@ This repo contains the solidity contracts for Bureau.
 - `Org.sol` : Profile contract for an individual Org (aka MFI).
 
 TODO:
-Implement authentication
-Move all front-end calls to `Controller.sol`
+- Implement authentication
+- Move all front-end calls to `Controller.sol`
